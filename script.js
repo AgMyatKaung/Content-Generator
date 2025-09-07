@@ -19,37 +19,28 @@ const loader = document.getElementById('loader');
 const messageBox = document.getElementById('messageBox');
 const messageText = document.getElementById('messageText');
 const darkModeToggle = document.getElementById('darkModeToggle');
+const sunIcon = document.querySelector('#darkModeToggle [data-lucide="sun"]');
+const moonIcon = document.querySelector('#darkModeToggle [data-lucide="moon"]');
 
-// --- Firebase Initialization ---
-// TODO: Replace with your Firebase project's configuration object
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    databaseURL: "YOUR_DATABASE_URL",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-
-// Check for saved dark mode preference in local storage
-if (localStorage.getItem('color-theme') === 'dark' || 
-    (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    document.documentElement.classList.add('dark');
-} else {
-    document.documentElement.classList.remove('dark');
+// --- Theme Management ---
+function applyTheme(theme) {
+    if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        sunIcon.classList.remove('hidden');
+        moonIcon.classList.add('hidden');
+    } else {
+        document.documentElement.classList.remove('dark');
+        sunIcon.classList.add('hidden');
+        moonIcon.classList.remove('hidden');
+    }
 }
 
-// Dark mode toggle event listener
-darkModeToggle.addEventListener('click', () => {
-    document.documentElement.classList.toggle('dark');
-    const theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-    localStorage.setItem('color-theme', theme);
-});
+function toggleTheme() {
+    const currentTheme = localStorage.getItem('color-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('color-theme', newTheme);
+    applyTheme(newTheme);
+}
 
 // --- I18N Translations & Setup ---
 const translations = {
@@ -66,6 +57,7 @@ const translations = {
         "advice2": "<strong>Define Audience & Tone:</strong> Who are you writing for? Example: \"Write in a friendly, encouraging tone for an audience of college students.\"",
         "advice3": "<strong>Provide Context:</strong> Give the AI a role. Example: \"Act as a seasoned travel writer and describe the beauty of Bagan's temples at sunrise.\"",
         "advice4": "<strong>Use Keywords:</strong> Include important keywords you want in the text to improve relevance and SEO.",
+        "advice5": "<strong>Experiment:</strong> Don't be afraid to try different content types, tones, and lengths. You might be surprised by what the AI can generate!",
         "contentTypes": ["Blog Post", "Email", "Social Media Post", "Advertisement", "Video Script", "Product Description"],
         "tones": ["Formal", "Casual", "Professional", "Friendly", "Humorous", "Inspirational"],
         "copySuccess": "Content copied to clipboard!", "copyError": "Failed to copy content.",
@@ -86,6 +78,7 @@ const translations = {
         "advice2": "<strong>ပရိသတ်နှင့် လေသံကို သတ်မှတ်ပါ-</strong> သင်သည် မည်သူ့အတွက် ရေးနေသနည်း။ ဥပမာ- \"ကောလိပ်ကျောင်းသားများအတွက် ဖော်ရွေပြီး အားပေးသည့်လေသံဖြင့် ရေးသားပါ။\"",
         "advice3": "<strong>ဆက်စပ်အကြောင်းအရာကို ပေးပါ-</strong> AI အား အခန်းကဏ္ဍတစ်ခုပေးပါ။ ဥပမာ- \"အတွေ့အကြုံရင့်ခရီးသွားစာရေးဆရာတစ်ဦးအဖြစ် ဆောင်ရွက်ပြီး နေထွက်ချိန်တွင် ပုဂံဘုရားပုထိုးများ၏ အလှကို ဖော်ပြပါ။\"",
         "advice4": "<strong>သော့ချက်စကားလုံးများသုံးပါ-</strong> ဆက်စပ်မှုနှင့် SEO ပိုမိုကောင်းမွန်စေရန် သင်ထည့်သွင်းလိုသော အရေးကြီးသောသော့ချက်စကားလုံးများကို ထည့်သွင်းပါ။",
+        "advice5": "<strong>စမ်းသပ်ပါ-</strong> ကွဲပြားခြားနားသောအကြောင်းအရာအမျိုးအစားများ၊ လေသံများနှင့် အရှည်များကိုစမ်းသပ်ရန်မကြောက်ပါနှင့်။ AI က ဘာတွေထုတ်ပေးနိုင်လဲဆိုတာ သင်အံ့သြသွားနိုင်ပါတယ်။",
         "contentTypes": ["ဘလော့ဂ်ပို့စ်", "အီးမေးလ်", "ဆိုရှယ်မီဒီယာ ပို့စ်", "ကြော်ငြာ", "ဗီဒီယိုဇာတ်ညွှန်း", "ကုန်ပစ္စည်း ဖော်ပြချက်"],
         "tones": ["တရားဝင်", "ပေါ့ပေါ့ပါးပါး", "ကျွမ်းကျင်ပိုင်နိုင်သော", "ဖော်ရွေသော", "ဟာသဉာဏ်ရွှင်သော", "စိတ်အားထက်သန်စေသော"],
         "copySuccess": "Clipboard သို့ ကူးယူပြီးပါပြီ!", "copyError": "ကူးယူရန် မအောင်မြင်ပါ။",
@@ -118,6 +111,7 @@ function setLanguage(lang) {
 
 // --- Firebase History ---
 function renderHistory() {
+    if (typeof database === 'undefined') return; // Don't run if Firebase isn't configured
     const historyRef = database.ref('history').orderByChild('createdAt');
     historyRef.on('value', (snapshot) => {
         historyContainer.innerHTML = '';
@@ -184,6 +178,7 @@ function hideViewModal() {
 
 // --- Event Listeners ---
 languageSelector.addEventListener('change', (e) => setLanguage(e.target.value));
+darkModeToggle.addEventListener('click', toggleTheme);
 
 contentForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -213,10 +208,13 @@ contentForm.addEventListener('submit', async (e) => {
     
     try {
         const apiKey = "AIzaSyChYUdEU30E7mUpVlJ4cCfQU94nsX9EvFg";
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
         const payload = { contents: [{ parts: [{ text: prompt }] }] };
         const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        if (!response.ok) throw new Error((await response.json()).error.message || `API Error: ${response.status}`);
+        if (!response.ok) {
+             const errorBody = await response.json();
+             throw new Error(errorBody.error.message || `API Error: ${response.status}`);
+        }
         const result = await response.json();
         const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!text) throw new Error("No content generated.");
@@ -250,6 +248,10 @@ copyBtn.addEventListener('click', () => {
 });
 
 saveBtn.addEventListener('click', () => {
+    if (typeof database === 'undefined') {
+         showMessage('Firebase is not configured. Cannot save history.', true);
+         return;
+    }
     const newHistoryRef = database.ref('history').push();
     const contentToSave = {
         title: generatedText.dataset.title || 'Untitled',
@@ -267,6 +269,9 @@ viewModalBackdrop.addEventListener('click', hideViewModal);
 
 // --- Initial Load & PWA Registration ---
 document.addEventListener('DOMContentLoaded', () => {
+    const initialTheme = localStorage.getItem('color-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(initialTheme);
+
     setLanguage(languageSelector.value);
     renderHistory();
     lucide.createIcons();
