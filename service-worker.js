@@ -1,9 +1,9 @@
 
-const CACHE_NAME = 'maak-content-generator-v4'; // Incremented cache name
+const CACHE_NAME = 'maak-content-generator-v5'; // Incremented cache name
 const urlsToCache = [
   '/',
   '/index.html',
-  '/script.js',
+  '/main.js',
   '/output.css',
   '/firebase-config.js',
   '/manifest.json',
