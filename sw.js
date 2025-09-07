@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'maak-content-generator-v3';
+const CACHE_NAME = 'maak-content-generator-v4'; // Incremented cache name
 const urlsToCache = [
   '/',
   '/index.html',
@@ -20,18 +20,26 @@ self.addEventListener('install', event => {
   );
 });
 
+// Network-first strategy
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Cache hit - return response
-        if (response) {
+    caches.open(CACHE_NAME).then(cache => {
+      return fetch(event.request)
+        .then(response => {
+          // If we get a valid response, put it in the cache.
+          if (response && response.status === 200) {
+            cache.put(event.request, response.clone());
+          }
           return response;
-        }
-        return fetch(event.request);
-      })
+        })
+        .catch(() => {
+          // If the network fails, serve from the cache.
+          return cache.match(event.request);
+        });
+    })
   );
 });
+
 
 self.addEventListener('activate', event => {
   const cacheWhitelist = [CACHE_NAME];
