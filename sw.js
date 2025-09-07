@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'maak-content-generator-v2';
+const CACHE_NAME = 'maak-content-generator-v3';
 const urlsToCache = [
   '/',
   '/index.html',
