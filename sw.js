@@ -1,14 +1,13 @@
 
-const CACHE_NAME = 'maak-content-generator-v1';
+const CACHE_NAME = 'maak-content-generator-v2';
 const urlsToCache = [
   '/',
   '/index.html',
   '/script.js',
+  '/output.css',
   '/firebase-config.js',
   '/manifest.json',
-  'https://cdn.tailwindcss.com',
-  'https://unpkg.com/lucide@latest',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Padauk:wght@400;700&display=swap'
+  'https://unpkg.com/lucide@latest'
 ];
 
 self.addEventListener('install', event => {
