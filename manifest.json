@@ -2,7 +2,7 @@
     "name": "MaaK Content Generator",
     "short_name": "Content Gen",
     "description": "A web app to generate various types of content in English and Burmese.",
-    "start_url": "/Content-Generator/index.html",
+    "start_url": ".",
     "display": "standalone",
     "background_color": "#f1f5f9",
     "theme_color": "#4f46e5",
@@ -10,12 +10,14 @@
         {
             "src": "icons/icon-192x192.png",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
         },
         {
             "src": "icons/icon-512x512.png",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
         }
     ]
 }
