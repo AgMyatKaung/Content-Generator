@@ -111,7 +111,8 @@ function setLanguage(lang) {
 
 // --- Firebase History ---
 function renderHistory() {
-    if (typeof database === 'undefined') return; // Don't run if Firebase isn't configured
+    if (typeof firebase === 'undefined') return; // Don't run if Firebase isn't configured
+    const database = firebase.database();
     const historyRef = database.ref('history').orderByChild('createdAt');
     historyRef.on('value', (snapshot) => {
         historyContainer.innerHTML = '';
@@ -154,6 +155,7 @@ function renderHistoryItem(data) {
     item.querySelector('.flex-grow').addEventListener('click', () => showViewModal(data));
     item.querySelector('.view-btn').addEventListener('click', () => showViewModal(data));
     item.querySelector('.delete-btn').addEventListener('click', () => {
+        const database = firebase.database();
         database.ref('history/' + data.id).remove()
             .then(() => showMessage(translations[languageSelector.value].deleteSuccess))
             .catch((error) => showMessage(translations[languageSelector.value].deleteError, true));
