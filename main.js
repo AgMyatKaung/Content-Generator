@@ -36,7 +36,7 @@ function applyTheme(theme) {
 }
 
 function toggleTheme() {
-    const currentTheme = localStorage.getItem('color-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const currentTheme = localStorage.getItem('color-theme') || (document.documentElement.classList.contains('dark') ? 'dark' : 'light');
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     localStorage.setItem('color-theme', newTheme);
     applyTheme(newTheme);
@@ -248,10 +248,11 @@ copyBtn.addEventListener('click', () => {
 });
 
 saveBtn.addEventListener('click', () => {
-    if (typeof database === 'undefined') {
+    if (typeof firebase === 'undefined') {
          showMessage('Firebase is not configured. Cannot save history.', true);
          return;
     }
+    const database = firebase.database();
     const newHistoryRef = database.ref('history').push();
     const contentToSave = {
         title: generatedText.dataset.title || 'Untitled',
@@ -273,7 +274,9 @@ document.addEventListener('DOMContentLoaded', () => {
     applyTheme(initialTheme);
 
     setLanguage(languageSelector.value);
-    renderHistory();
+    if (typeof firebase !== 'undefined') {
+        renderHistory();
+    }
     lucide.createIcons();
     
     const detailsElement = document.querySelector('details');
