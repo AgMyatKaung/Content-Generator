@@ -20,6 +20,22 @@ const messageBox = document.getElementById('messageBox');
 const messageText = document.getElementById('messageText');
 const darkModeToggle = document.getElementById('darkModeToggle');
 
+// --- Firebase Initialization ---
+// TODO: Replace with your Firebase project's configuration object
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    databaseURL: "YOUR_DATABASE_URL",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
 // Check for saved dark mode preference in local storage
 if (localStorage.getItem('color-theme') === 'dark' || 
     (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -100,24 +116,22 @@ function setLanguage(lang) {
     });
 }
 
-// --- Local Storage History ---
-function getHistory() {
-    return JSON.parse(localStorage.getItem('contentHistory') || '[]');
-}
-
-function saveHistory(history) {
-    localStorage.setItem('contentHistory', JSON.stringify(history));
-}
-
+// --- Firebase History ---
 function renderHistory() {
-    const history = getHistory().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    historyContainer.innerHTML = '';
-    if (history.length === 0) {
-        historyPlaceholder.style.display = 'block';
-        return;
-    }
-    historyPlaceholder.style.display = 'none';
-    history.forEach(item => renderHistoryItem(item));
+    const historyRef = database.ref('history').orderByChild('createdAt');
+    historyRef.on('value', (snapshot) => {
+        historyContainer.innerHTML = '';
+        if (snapshot.exists()) {
+            historyPlaceholder.style.display = 'none';
+            const history = [];
+            snapshot.forEach((childSnapshot) => {
+                history.push({ id: childSnapshot.key, ...childSnapshot.val() });
+            });
+            history.reverse().forEach(item => renderHistoryItem(item));
+        } else {
+            historyPlaceholder.style.display = 'block';
+        }
+    });
 }
 
 // --- UI Functions ---
@@ -146,11 +160,9 @@ function renderHistoryItem(data) {
     item.querySelector('.flex-grow').addEventListener('click', () => showViewModal(data));
     item.querySelector('.view-btn').addEventListener('click', () => showViewModal(data));
     item.querySelector('.delete-btn').addEventListener('click', () => {
-         let history = getHistory();
-         history = history.filter(h => h.id !== data.id);
-         saveHistory(history);
-         renderHistory();
-         showMessage(translations[languageSelector.value].deleteSuccess);
+        database.ref('history/' + data.id).remove()
+            .then(() => showMessage(translations[languageSelector.value].deleteSuccess))
+            .catch((error) => showMessage(translations[languageSelector.value].deleteError, true));
     });
     historyContainer.appendChild(item);
     lucide.createIcons();
@@ -238,18 +250,16 @@ copyBtn.addEventListener('click', () => {
 });
 
 saveBtn.addEventListener('click', () => {
-    const history = getHistory();
+    const newHistoryRef = database.ref('history').push();
     const contentToSave = {
-        id: Date.now().toString(),
         title: generatedText.dataset.title || 'Untitled',
         content: generatedText.dataset.fullContent,
         language: generatedText.dataset.language,
         createdAt: new Date().toISOString()
     };
-    history.push(contentToSave);
-    saveHistory(history);
-    renderHistory();
-    showMessage(translations[languageSelector.value].saveSuccess);
+    newHistoryRef.set(contentToSave)
+        .then(() => showMessage(translations[languageSelector.value].saveSuccess))
+        .catch((error) => showMessage(translations[languageSelector.value].saveError, true));
 });
 
 closeViewModalBtn.addEventListener('click', hideViewModal);
